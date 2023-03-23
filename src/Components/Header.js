@@ -1,4 +1,4 @@
-import TrollFace from "./Images/trollface.png"
+import TrollFace from "./Images/troll.png"
 
 export default function Header() {
     return (
@@ -7,7 +7,7 @@ export default function Header() {
               <img src={TrollFace} alt="logo" className="logo"></img>
               <h2 className="title">Meme Generator</h2>
           </div>
-          <h3 className="secondary-title">React Course - Project 3</h3>
+          <h3 className="secondary-title">Your daily fun dose</h3>
       </header>
     );
 }

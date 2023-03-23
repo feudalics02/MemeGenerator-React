@@ -147,9 +147,16 @@ code {
 }
 
 #top-text {
-  margin-top: -400px;
+  position: absolute;
+  margin-top: -410px;
 }
 
 #bottom-text {
+  position: absolute;
   margin-top: -85px;
+}
+
+#download-button {
+  margin-top: 15px;
+  margin-bottom: 25px;
 }

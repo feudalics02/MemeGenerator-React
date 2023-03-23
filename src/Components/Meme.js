@@ -34,14 +34,13 @@ export default function Meme() {
                 randomImage: allMemes[index].url
             };
         });
-        console.log(meme);
     }
 
     return (
       <main className="meme">
           <div className="boxes">
-              <input className="box" name="topText" onChange={handleChange} value={meme.topText} placeholder="Top text"></input>
-              <input className="box" name="bottomText" onChange={handleChange} value={meme.bottomText} placeholder="Bottom text"></input>
+              <input className="box" maxLength={20} name="topText" onChange={handleChange} value={meme.topText} placeholder="Top text"></input>
+              <input className="box" maxLength={20} name="bottomText" onChange={handleChange} value={meme.bottomText} placeholder="Bottom text"></input>
           </div>
           <button className="image-button" onClick={getImage}>Get a new meme image</button>
           <div className="meme">

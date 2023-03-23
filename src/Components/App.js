@@ -5,8 +5,8 @@ import Meme from "./Meme";
 function App() {
   return (
     <div className="App">
-      <Header />
-      <Meme />
+        <Header />
+        <Meme />
     </div>
   );
 }
