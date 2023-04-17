@@ -67,20 +67,31 @@ export default function Meme() {
         setThirdText(prevState => !prevState);
     }
 
+    function downloadImage() {
+
+    }
+
     return (
       <main className="meme">
-          <div className="input">
+          <section className="input">
               <div className="third-text">
                   {thirdText && <input width="200px" className="box" autoComplete="off" maxLength={20} name="additionalText" id="third-text" onChange={handleChange} value={meme.additionalText} placeholder="Additional text"></input>}
                   <button className="image-button" onClick={handleClicked}>{thirdText ? "Remove additional text" : "Add additional text"}</button>
               </div>
+
               <div className="boxes">
                   <input className="box" autoComplete="off" maxLength={20} name="topText" onChange={handleChange} value={meme.topText} placeholder="Top text"></input>
                   <input className="box" autoComplete="off" maxLength={20} name="bottomText" onChange={handleChange} value={meme.bottomText} placeholder="Bottom text"></input>
               </div>
+
               <button className="image-button" onClick={getImage}>Get a new meme image</button>
-          </div>
-          <div className="meme-content">
+
+              <div className="boxes">
+                  <button className="image-button" id="download-button" onClick={downloadImage}>Download image as PNG</button>
+              </div>
+          </section>
+
+          <section className="meme-content">
               <img src={meme.randomImage} alt="" className="meme-image"></img>
               <Draggable onDrag={() => handleDrag("topText")} position={!drag.topText ? {x: 40, y: -480} : null} className="draggable" bounds="parent">
                   <h2 className="meme-text" id="top-text">{meme.topText}</h2>
@@ -94,7 +105,7 @@ export default function Meme() {
               <Draggable onDrag={() => handleDrag("bottomText")} position={!drag.bottomText ? {x: 40, y: -100} : null} className="draggable" bounds="parent">
                   <h2 className="meme-text" id="bottom-text">{meme.bottomText}</h2>
               </Draggable>
-          </div>
+          </section>
       </main>
     );
 }
