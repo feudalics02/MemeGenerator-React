@@ -1,7 +1,6 @@
 import React, {useState, useEffect, useRef} from "react";
 import data from "../data.js";
 import Draggable from "react-draggable";
-import {isContentEditable} from "@testing-library/user-event/dist/utils";
 
 export default function Meme() {
     const [meme, setMeme] = React.useState({
