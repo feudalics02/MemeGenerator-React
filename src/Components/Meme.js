@@ -1,6 +1,7 @@
-import React from "react";
+import React, {useState, useEffect, useRef} from "react";
 import data from "../data.js";
 import Draggable from "react-draggable";
+import {isContentEditable} from "@testing-library/user-event/dist/utils";
 
 export default function Meme() {
     const [meme, setMeme] = React.useState({
@@ -10,23 +11,25 @@ export default function Meme() {
         randomImage: "https://i.imgflip.com/1bij.jpg"
     });
 
-    const [allMemes, setAllMemes] = React.useState(data.data.memes);
+    const [allMemes, setAllMemes] = useState(data.data.memes);
 
-    const [thirdText, setThirdText] = React.useState(false);
+    const [additionalText, setAdditionalText] = useState(false);
 
-    const [drag, setDrag] = React.useState({
+    const ref = useRef(null);
+
+    const [drag, setDrag] = useState({
         topText: false,
         bottomText: false,
         additionalText: false
     });
 
-    React.useEffect(() => {
+    useEffect(() => {
         fetch("https://api.imgflip.com/get_memes")
         .then(data => data.json())
         .then(memes => setAllMemes(memes.data.memes));
     }, []);
 
-    function handleChange(event) {
+    const handleChange = (event) => {
         const {name, value} = event.target;
         setDrag(prevState => {
             return {...prevState, [name]: false}
@@ -37,9 +40,9 @@ export default function Meme() {
                 [name]: value
             }
         });
-    }
+    };
 
-    function getImage() {
+    const getImage = () => {
         const index = Math.floor(Math.random() * allMemes.length);
         setMeme(function(prevMeme) {
             return {
@@ -47,16 +50,16 @@ export default function Meme() {
                 randomImage: allMemes[index].url
             };
         });
-    }
+    };
 
-    function handleDrag(text) {
+    const handleDrag = (text) => {
         setDrag(prevState => {
             return {...prevState, [text]: true}
         });
-    }
+    };
 
-    function handleClicked() {
-        if (thirdText) {
+    const handleClicked = () => {
+        if (additionalText) {
             setMeme(prevState => {
                 return {
                     ...prevState,
@@ -64,19 +67,26 @@ export default function Meme() {
                 }
             });
         }
-        setThirdText(prevState => !prevState);
-    }
+        setAdditionalText(prevState => !prevState);
+    };
 
-    function downloadImage() {
-
-    }
+    const downloadImage = async () => {
+        const response = await fetch(meme.randomImage);
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = "meme-" + Date.now() + ".png";
+        link.click();
+        URL.revokeObjectURL(url);
+    };
 
     return (
       <main className="meme">
           <section className="input">
               <div className="third-text">
-                  {thirdText && <input width="200px" className="box" autoComplete="off" maxLength={20} name="additionalText" id="third-text" onChange={handleChange} value={meme.additionalText} placeholder="Additional text"></input>}
-                  <button className="image-button" onClick={handleClicked}>{thirdText ? "Remove additional text" : "Add additional text"}</button>
+                  {additionalText && <input width="200px" className="box" autoComplete="off" maxLength={20} name="additionalText" id="third-text" onChange={handleChange} value={meme.additionalText} placeholder="Additional text"></input>}
+                  <button className="image-button" onClick={handleClicked}>{additionalText ? "Remove additional text" : "Add additional text"}</button>
               </div>
 
               <div className="boxes">
@@ -92,12 +102,12 @@ export default function Meme() {
           </section>
 
           <section className="meme-content">
-              <img src={meme.randomImage} alt="" className="meme-image"></img>
+              <img ref={ref} src={meme.randomImage} alt="" className="meme-image"></img>
               <Draggable onDrag={() => handleDrag("topText")} position={!drag.topText ? {x: 40, y: -480} : null} className="draggable" bounds="parent">
                   <h2 className="meme-text" id="top-text">{meme.topText}</h2>
               </Draggable>
 
-              {thirdText &&
+              {additionalText &&
                   <Draggable onDrag={() => handleDrag("additionalText")} position={!drag.additionalText ? {x: 40, y: -290} : null} className="draggable" bounds="parent">
                     <h2 className="meme-text" id="additional-text">{meme.additionalText}</h2>
                   </Draggable>}
