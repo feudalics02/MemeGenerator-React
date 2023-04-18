@@ -1,4 +1,4 @@
-import React, {useState, useEffect, useRef} from "react";
+import React, {useState, useEffect} from "react";
 import data from "../data.js";
 import Draggable from "react-draggable";
 
@@ -13,8 +13,6 @@ export default function Meme() {
     const [allMemes, setAllMemes] = useState(data.data.memes);
 
     const [additionalText, setAdditionalText] = useState(false);
-
-    const ref = useRef(null);
 
     const [drag, setDrag] = useState({
         topText: false,
@@ -101,7 +99,7 @@ export default function Meme() {
           </section>
 
           <section className="meme-content">
-              <img ref={ref} src={meme.randomImage} alt="" className="meme-image"></img>
+              <img src={meme.randomImage} alt="" className="meme-image"></img>
               <Draggable onDrag={() => handleDrag("topText")} position={!drag.topText ? {x: 40, y: -480} : null} className="draggable" bounds="parent">
                   <h2 className="meme-text" id="top-text">{meme.topText}</h2>
               </Draggable>
