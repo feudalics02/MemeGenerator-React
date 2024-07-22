@@ -1,0 +1,21 @@
+{
+  "family": "react-app",
+  "networkMode": "awsvpc",
+  "cpu": "256",
+  "memory": "512",
+  "containerDefinitions": [
+    {
+      "name": "meme-generator-react",
+      "image": "730335641842.dkr.ecr.us-east-1.amazonaws.com/react-container-repo:latest",
+      "cpu": 256,
+      "memory": 512,
+      "essential": true,
+      "portMappings": [
+        {
+          "containerPort": 3000,
+          "hostPort": 3000
+        }
+      ]
+    }
+  ]
+}

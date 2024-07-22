@@ -1,0 +1,98 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: >
+  AWS CloudFormation template that creates an ECS service using an existing ECS cluster
+  and task definition. It sets up an Application Load Balancer to distribute traffic to the ECS task.
+
+Parameters:
+  ClusterArn:
+    Type: String
+    Description: The ARN of the existing ECS cluster.
+    Default: arn:aws:ecs:us-east-1:730335641842:cluster/react-app-cluster
+
+  ECSServiceSecurityGroup:
+    Type: String
+    Description: Security group for the ECS service.
+    Default: sg-0265cdb233b508d3f
+
+  LoadBalancerSecurityGroup:
+    Type: String
+    Description: Security group for the application load balancer.
+    Default: sg-0f51fc825afed799b
+
+  VpcId:
+    Type: String
+    Description: The VPC ID where the resources will be created.
+    Default: vpc-0df85a603f9115814
+
+  FirstSubnetId:
+    Type: String
+    Description: The first subnet ID.
+    Default: subnet-01eb7e83ceed0b2ad
+
+  SecondSubnetId:
+    Type: String
+    Description: The second subnet ID.
+    Default: subnet-02d3b97b9cc0556ff
+
+Resources:
+  ECSService:
+    Type: AWS::ECS::Service
+    DependsOn: LoadBalancerListener
+    DeletionPolicy: Delete
+    Properties:
+      Cluster: !Ref ClusterArn
+      TaskDefinition: react-app
+      DesiredCount: 1
+      LaunchType: EC2
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          Subnets:
+            - !Ref FirstSubnetId
+            - !Ref SecondSubnetId
+          SecurityGroups:
+            - !Ref ECSServiceSecurityGroup
+      LoadBalancers:
+        - TargetGroupArn: !Ref TargetGroup
+          ContainerName: meme-generator-react
+          ContainerPort: 3000
+
+  LoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    DeletionPolicy: Delete
+    Properties:
+      Name: ReactAppLoadBalancer
+      Subnets:
+        - !Ref FirstSubnetId
+        - !Ref SecondSubnetId
+      SecurityGroups:
+        - !Ref LoadBalancerSecurityGroup
+      Scheme: internet-facing
+
+  TargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    DeletionPolicy: Delete
+    Properties:
+      Name: ReactAppTargetGroup
+      Port: 80
+      Protocol: HTTP
+      VpcId: !Ref VpcId
+      TargetType: ip
+      HealthCheckIntervalSeconds: 60
+      HealthCheckPath: /
+      HealthCheckProtocol: HTTP
+      HealthCheckTimeoutSeconds: 15
+      HealthyThresholdCount: 5
+      UnhealthyThresholdCount: 2
+      Matcher:
+        HttpCode: 200
+
+  LoadBalancerListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    DeletionPolicy: Delete
+    Properties:
+      LoadBalancerArn: !Ref LoadBalancer
+      Port: 80
+      Protocol: HTTP
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref TargetGroup
