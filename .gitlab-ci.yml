@@ -1,5 +1,6 @@
 stages:
   - build
+  - deploy
 
 variables:
   IMAGE_NAME: react-app
@@ -7,7 +8,7 @@ variables:
   TAG_COMMIT: $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/$IMAGE_NAME:$CI_COMMIT_SHORT_SHA
   DOCKER_TLS_CERTDIR: ""
 
-docker:
+build:
   image: docker:stable
   stage: build
   only:
@@ -15,9 +16,50 @@ docker:
   services:
     - docker:dind
   script:
-    - aws ecr get-login-password --region $AWS_REGION |
-      docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecs.$AWS_REGION.amazonaws.com
+    - aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
     - docker pull $TAG_LATEST || true
     - docker build --cache-from $TAG_LATEST -t $TAG_COMMIT -t $TAG_LATEST .
     - docker push $TAG_COMMIT
     - docker push $TAG_LATEST
+
+deploy:
+  image: docker:stable
+  stage: deploy
+  only:
+    - master
+  services:
+    - docker:dind
+  script:
+    - |
+      if aws cloudformation describe-stacks --stack-name react-deployment; then
+        echo "Stack exists, deleting...";
+        aws cloudformation delete-stack --stack-name react-deployment;
+        aws cloudformation wait stack-delete-complete --stack-name react-deployment;
+      else
+        echo "Stack does not exist, skipping deletion.";
+      fi
+
+    - |
+      echo "Terminating all running EC2 instances...";
+      INSTANCE_IDS=$(aws ec2 describe-instances --query "Reservations[*].Instances[?State.Name == 'running'].InstanceId" --output text);
+      if [ -n "$INSTANCE_IDS" ]; then
+        aws ec2 terminate-instances --instance-ids $INSTANCE_IDS;
+        aws ec2 wait instance-terminated --instance-ids $INSTANCE_IDS;
+        echo "Terminated instances: $INSTANCE_IDS";
+      else
+        echo "No running instances found.";
+      fi
+
+    - |
+      aws ec2 run-instances \
+        --image-id ami-02749f7a96386bacf \
+        --count 1 \
+        --instance-type t2.micro \
+        --key-name key-pair \
+        --subnet-id subnet-01eb7e83ceed0b2ad \
+        --user-data file://aws/ecs-user-data.txt \
+        --iam-instance-profile Name=ECSInstanceRole \
+        --network-interfaces '[{"DeviceIndex":0,"SubnetId":"subnet-01eb7e83ceed0b2ad","AssociatePublicIpAddress":true}]'
+
+    - aws cloudformation create-stack --stack-name react-deployment --template-body file://aws/service-deploy.yaml
+    - aws cloudformation wait stack-create-complete --stack-name react-deployment
